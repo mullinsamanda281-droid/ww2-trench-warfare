@@ -128,7 +128,29 @@ export class Soldier {
     this.state = 'fall';
     this.fallT = 0;
     this.fallDir = dir || new THREE.Vector3(1, 0, 0);
+    this.poof();
     if (this.role === 'mg' && this.team === 'allied' && this.mgFire) this.mgFire.stop();
+  }
+
+  // Toy-like expanding dust puff (no gore)
+  poof() {
+    const puff = new THREE.Mesh(
+      new THREE.SphereGeometry(0.35, 6, 4),
+      mat(PALETTE.mudDark, { transparent: true, opacity: 0.65 })
+    );
+    puff.position.copy(this.group.position);
+    puff.position.y += 0.7;
+    this.scene.add(puff);
+    const start = performance.now();
+    const grow = () => {
+      const t = (performance.now() - start) / 450;
+      if (t >= 1) { this.scene.remove(puff); return; }
+      const s = 1 + t * 2.2;
+      puff.scale.set(s, s * 0.8, s);
+      puff.material.opacity = 0.65 * (1 - t);
+      requestAnimationFrame(grow);
+    };
+    grow();
   }
 
   respawn() {

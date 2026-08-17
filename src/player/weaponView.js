@@ -15,6 +15,7 @@ export class WeaponView {
     this.bobT = 0;
     this.recoil = 0;
     this.aiming = false;
+    this.adsAmount = 0;
 
     this.buildRifles();
     this.setWeapon(0);
@@ -120,6 +121,9 @@ export class WeaponView {
   }
 
   update(dt, moving, grounded) {
+    // ADS transition
+    this.adsAmount += ((this.aiming ? 1 : 0) - this.adsAmount) * Math.min(1, dt * 12);
+
     // Idle sway
     this.bobT += dt * (moving ? 9 : 2.2);
     const bobX = moving && grounded ? Math.sin(this.bobT) * 0.008 : Math.sin(this.bobT * 0.5) * 0.003;
@@ -130,10 +134,20 @@ export class WeaponView {
     const recZ = this.recoil * 1.2;
     const recY = this.recoil * 1.8;
 
-    const ads = this.aiming ? 0.35 : 1;
-    this.root.position.x = 0.26 * ads + bobX;
-    this.root.position.y = -0.24 * ads + bobY + recY;
-    this.root.position.z = -0.5 * ads + recZ;
+    const a = this.adsAmount;
+    // Hip-fire pose vs ADS: sights aligned with the camera center
+    const hip = { x: 0.26, y: -0.24, z: -0.5 };
+    const adsPos = { x: 0.0, y: -0.062, z: -0.52 };
+    this.root.position.x = hip.x * (1 - a) + adsPos.x * a + bobX * (1 - a * 0.8);
+    this.root.position.y = hip.y * (1 - a) + adsPos.y * a + bobY * (1 - a * 0.8) + recY;
+    this.root.position.z = hip.z * (1 - a) + adsPos.z * a + recZ;
     this.root.rotation.set(0, 0, this.recoil * 0.6);
+
+    // Slight zoom while aiming
+    const fov = 75 - a * 20;
+    if (Math.abs(this.camera.fov - fov) > 0.001) {
+      this.camera.fov = fov;
+      this.camera.updateProjectionMatrix();
+    }
   }
 }

@@ -140,6 +140,57 @@ export class SoundSystem {
     osc.stop(t + 0.1);
   }
 
+  // Footstep by surface: wood (duckboards), mud (open ground), water (craters)
+  step(surface) {
+    if (!this.ctx || !this.enabled) return;
+    const t = this.ctx.currentTime;
+    const g = this.ctx.createGain();
+    g.connect(this.master);
+    if (surface === 'water') {
+      const noise = this.noiseBurst(t, 0.18, 0.28);
+      const lp = this.ctx.createBiquadFilter();
+      lp.type = 'lowpass';
+      lp.frequency.value = 700;
+      noise.connect(lp).connect(g);
+      g.gain.setValueAtTime(0.8, t);
+      g.gain.exponentialRampToValueAtTime(0.001, t + 0.2);
+      return;
+    }
+    if (surface === 'wood') {
+      const osc = this.ctx.createOscillator();
+      osc.type = 'square';
+      osc.frequency.setValueAtTime(420, t);
+      osc.frequency.exponentialRampToValueAtTime(180, t + 0.05);
+      g.gain.setValueAtTime(0.09, t);
+      g.gain.exponentialRampToValueAtTime(0.001, t + 0.07);
+      osc.connect(g);
+      osc.start(t);
+      osc.stop(t + 0.08);
+      return;
+    }
+    // mud: low soft thud
+    const osc = this.ctx.createOscillator();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(130, t);
+    osc.frequency.exponentialRampToValueAtTime(70, t + 0.06);
+    g.gain.setValueAtTime(0.22, t);
+    g.gain.exponentialRampToValueAtTime(0.001, t + 0.09);
+    osc.connect(g);
+    osc.start(t);
+    osc.stop(t + 0.1);
+  }
+
+  // Bullet slapping dirt/sandbags
+  impact() {
+    if (!this.ctx || !this.enabled) return;
+    const t = this.ctx.currentTime;
+    const noise = this.noiseBurst(t, 0.07, 0.25);
+    const lp = this.ctx.createBiquadFilter();
+    lp.type = 'lowpass';
+    lp.frequency.value = 1100;
+    noise.connect(lp).connect(this.master);
+  }
+
   noiseBurst(t, dur, vol) {
     const bufferSize = Math.floor(this.ctx.sampleRate * dur);
     const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);

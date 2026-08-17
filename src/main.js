@@ -141,6 +141,8 @@ function tryFire() {
   if (hit && hit.type === 'soldier' && hit.soldier.team !== player.team) {
     hit.soldier.hit(w.damage, ray.ray.direction);
     sound.hit();
+  } else if (hit && hit.type === 'terrain') {
+    sound.impact();
   }
   spawnTracer(ray.ray.origin, ray.ray.origin.clone().add(ray.ray.direction.clone().multiplyScalar(hit ? hit.dist : 140)));
 
@@ -249,6 +251,27 @@ function killPlayer() {
   }, 2600);
 }
 
+// --- Footsteps (surface-aware) ---
+let stepTimer = 0;
+function updateFootsteps(dt) {
+  if (!player.alive || !player.onGround) return;
+  const moving = player.keys.has('KeyW') || player.keys.has('KeyA') || player.keys.has('KeyS') || player.keys.has('KeyD');
+  if (!moving) return;
+  stepTimer -= dt;
+  if (stepTimer > 0) return;
+  stepTimer = player.sprinting ? 0.32 : 0.44;
+  sound.step(surfaceAt(player.pos));
+}
+
+function surfaceAt(pos) {
+  const { craterRims } = map.terrain;
+  for (const { x, z, r } of craterRims) {
+    if (Math.hypot(pos.x - x, pos.z - z) < r * 0.6) return 'water';
+  }
+  if (pos.y < -1.4) return 'wood'; // trench floor (duckboards)
+  return 'mud';
+}
+
 // --- Net (optional; connect via ?server=ws://host:port) ---
 const netUrl = new URLSearchParams(location.search).get('server');
 let net = null;
@@ -272,6 +295,7 @@ function animate() {
   env.update(dt, t);
   artillery.update(dt, t);
   rain.update(dt, player.pos);
+  updateFootsteps(dt);
 
   for (const b of bots) b.update(dt, t, { sound, player, collision: map.collision });
 
