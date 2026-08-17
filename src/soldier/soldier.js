@@ -295,9 +295,16 @@ export class Soldier {
     if (!this.hasLineOfSight(world.collision, eye, target)) return;
 
     const dist = eye.distanceTo(target);
-    const hitChance = Math.max(0.1, 0.6 - dist * 0.005);
+    // Hit chance: long-range falloff so medium distances remain viable.
+    // Formula tuned to criteria: >=35% at 10m, >=25% at 20m, <=15% at 30m, <=5% at 40m.
+    const hitChance = Math.max(0.05, 0.6 - dist * 0.015);
     if (Math.random() < hitChance) {
-      world.damagePlayer(this.role === 'mg' ? 9 : 32, this);
+      // Damage falls off with distance so close-range remains deadliest.
+      // Rifle: 32 at point-blank, 20 at 40m. MG: 9 at point-blank, 5 at 40m.
+      const rifleDmg = Math.max(20, 32 - Math.floor(dist * 0.3));
+      const mgDmg = Math.max(5, 9 - Math.floor(dist * 0.1));
+      const dmg = this.role === 'mg' ? mgDmg : rifleDmg;
+      world.damagePlayer(dmg, this);
     }
   }
 

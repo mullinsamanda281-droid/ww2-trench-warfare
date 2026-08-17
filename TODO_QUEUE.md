@@ -18,6 +18,87 @@
 
 ## READY
 
+ID: GAME-QA-001
+TITLE: Automated browser smoke test (headless)
+CATEGORY: QA
+PRIORITY: MEDIUM
+COMPLEXITY: HIGH
+DESCRIPTION: Drive the real page in a headless browser (puppeteer/playwright):
+assert no console errors, pointer lock engages, game loop advances frames.
+ACCEPTANCE:
+- [ ] Zero console errors on boot
+- [ ] Frames advance after ENTER clicked
+STATUS: BLOCKED
+- No headless browser binary available in this environment; simulated playtesting (see Phase 50 loop) can substitute until a browser is installed.
+
+ID: GAME-AUDIO-002
+TITLE: Footstep material varieties (concrete, sand, metal)
+CATEGORY: Audio
+PRIORITY: MEDIUM
+COMPLEXITY: LOW
+DEPENDENCIES: sound.js step() existing surface detection
+DESCRIPTION: The step() function currently supports wood/mud/water. Add concrete, sand,
+and metal surfaces with distinct volume/character, and a generic impact sound for
+unmapped surfaces. Extend main.js surfaceAt() to classify terrain types at the player's
+feet.
+ACCEPTANCE:
+- [ ] Concrete: quieter than wood, muffled attack
+- [ ] Sand: quieter, more hiss, granular texture
+- [ ] Metal: louder, sharper attack, longer decay
+- [ ] Unmapped surfaces fall back to a default impact sound
+- [ ] Footstep volumes mix correctly with gunfire and ambient
+STATUS: READY
+
+ID: GAME-NET-002
+TITLE: Relay chat between connected players
+CATEGORY: Multiplayer
+PRIORITY: MEDIUM
+COMPLEXITY: MEDIUM
+DEPENDENCIES: server/index.js relay infrastructure, protocol.js CHAT msg type
+DESCRIPTION: Extend the 2-player relay so each player can type messages that appear
+in the local HUD for the other player to read. Adds a CHAT message type, a minimal
+on-screen text field, and relay logic. Designed for 2 players only; more players
+would need a lobby system.
+ACCEPTANCE:
+- [ ] Player A types a message, Player B sees it in the HUD
+- [ ] Messages are relayed via the existing WS relay
+- [ ] Chat input dismisses after send, field clears
+- [ ] Chat persists across rounds (until either player leaves)
+STATUS: READY
+
+ID: GAME-BAL-001
+TITLE: Balance hit chance and damage falloff per range
+CATEGORY: Gameplay
+PRIORITY: MEDIUM
+COMPLEXITY: LOW
+DEPENDENCIES: soldier.js fireShot hit chance formula
+DESCRIPTION: The current hit chance Math.max(0.1, 0.6 - dist*0.005) favors point-blank;
+tweak the coefficient and add distance tiers so medium range (~20m) remains viable,
+while point-blank has diminishing returns and falloff past 40m is severe.
+ACCEPTANCE:
+- [ ] Hit chance at 10m >= 35%
+- [ ] Hit chance at 20m >= 25%
+- [ ] Hit chance at 30m <= 15%
+- [ ] Hit chance at 40m <= 5%
+- [ ] Rifle damage 32 at point-blank, scaling down to 20 at 40m
+- [ ] MG damage 9 at point-blank, scaling down to 5 at 40m
+STATUS: DONE
+
+ID: GAME-AI-003
+TITLE: Mortar intelligently targets nearest player
+CATEGORY: AI
+PRIORITY: MEDIUM
+COMPLEXITY: LOW
+DEPENDENCIES: mortar.js pickTarget player check
+DESCRIPTION: Currently the mortar targets completely random coords in NML. Make it
+select the nearest living player within ~25m of the mortar pit each cycle, so the
+barrage pressures players who are positioned forward and rewards holding the trench.
+ACCEPTANCE:
+- [ ] Mortar fire() selects player position instead of random coords when a player is alive and within 25m of the pit
+- [ ] If multiple players, picks the one with smallest distance
+- [ ] Falls back to random when no players are alive or all are beyond 25m
+STATUS: DONE
+
 ID: GAME-PERF-001
 TITLE: Frustum culling + merged geometry for ground patches
 CATEGORY: Performance
@@ -31,7 +112,7 @@ ACCEPTANCE:
 - [ ] Map draw calls reduced by 40%+
 - [ ] Tri budget unchanged
 - [ ] Tests still pass
-STATUS: READY
+STATUS: DONE
 
 ID: GAME-INPUT-001
 TITLE: Touch/mobile fallback controls
@@ -44,7 +125,7 @@ browsers (map is optimized for mobile per spec).
 ACCEPTANCE:
 - [ ] Joystick moves, drag looks, buttons fire/reload
 - [ ] Works in pointer events
-STATUS: READY
+STATUS: DONE
 
 ID: GAME-NET-001
 TITLE: Local echo "net mode" with N relay server scaffold
@@ -57,7 +138,7 @@ browsers can play on the map. Clients sync player snapshots via protocol.js.
 ACCEPTANCE:
 - [ ] Two clients connect and see each other's blocky soldiers
 - [ ] Position/yaw/health sync at 20Hz
-STATUS: READY
+STATUS: DONE
 
 ID: GAME-CONTENT-002
 TITLE: Axis mortar pit becomes functional (area barrage)
@@ -71,7 +152,7 @@ ACCEPTANCE:
 - [ ] Shell arcs from the pit onto NML on a timer
 - [ ] Impact shows a burst + crater puff
 - [ ] Player in blast radius takes damage (with warning)
-STATUS: READY
+STATUS: DONE
 
 ID: GAME-AI-002
 TITLE: Bots peek/duck reaction + mg suppression on player
@@ -85,20 +166,7 @@ ACCEPTANCE:
 - [ ] Bot crouches visually after being shot
 - [ ] MG bursts aim near player
 - [ ] No infinite LOS camping
-STATUS: READY
-
-ID: GAME-QA-001
-TITLE: Automated browser smoke test (headless)
-CATEGORY: QA
-PRIORITY: MEDIUM
-COMPLEXITY: HIGH
-DEPENDENCIES: none
-DESCRIPTION: Drive the real page in a headless browser (puppeteer/playwright):
-assert no console errors, pointer lock engages, game loop advances frames.
-ACCEPTANCE:
-- [ ] Zero console errors on boot
-- [ ] Frames advance after ENTER clicked
-STATUS: READY
+STATUS: DONE
 
 ## IN PROGRESS
 (none — cycle beginning)

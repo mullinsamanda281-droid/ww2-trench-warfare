@@ -28,8 +28,18 @@ export class Mortar {
     this.shellMat = mat(PALETTE.steelDark);
   }
 
-  // Pick a target: mostly No Man's Land, occasionally toward the allied front
-  pickTarget() {
+  // Pick a target: mostly No Man's Land, occasionally toward the allied front.
+// If a player is alive and within ~25m of the mortar pit, target them instead
+// so the barrage pressures forward-positioned players.
+  pickTarget(player) {
+    const pit = new THREE.Vector3(this.pos.x, 0, this.pos.z);
+    const playerPos = player && player.alive ? new THREE.Vector3(player.pos.x, 0, player.pos.z) : null;
+    if (playerPos) {
+      const d = pit.distanceTo(playerPos);
+      if (d < 25) {
+        return { x: player.pos.x, z: player.pos.z };
+      }
+    }
     if (Math.random() < 0.2) {
       // deeper on the allied half / near the allied fire step
       return { x: -36 + Math.random() * 72, z: 6 + Math.random() * 12, onTrench: true };
@@ -38,7 +48,7 @@ export class Mortar {
   }
 
   fire(layout, player) {
-    const target = this.pickTarget();
+    const target = this.pickTarget(player);
     const from = new THREE.Vector3(this.pos.x, 0.8, this.pos.z);
     const to = new THREE.Vector3(target.x, 0, target.z);
     const start = performance.now();
