@@ -61,28 +61,65 @@ export function buildMgPosition(facing) {
   return g;
 }
 
-// Allied corrugated steel bunker - half-sunk into the trench line, slit facing NML
+// Allied corrugated steel bunker - hollow interior, half-sunk into the trench
+// line. Doorway faces the trench (rear), firing slit faces NML (front).
+// Local frame: +Z = toward the trench, -Z = toward No Man's Land.
 export function buildSteelBunker(facing) {
   const g = new THREE.Group();
-  const body = new THREE.Mesh(chamferBox(4.2, 2.2, 3.4, 0.1), mat(PALETTE.steel));
-  body.position.y = -0.2;
-  g.add(body);
-  // Corrugation bands
-  const bandMat = mat(PALETTE.steelDark);
-  for (let i = 0; i < 4; i++) {
-    const band = new THREE.Mesh(new THREE.BoxGeometry(4.3, 0.06, 3.5), bandMat);
-    band.position.y = -0.2 + (i - 1.5) * 0.42;
-    g.add(band);
+  const steelMat = mat(PALETTE.steel);
+  const steelDarkMat = mat(PALETTE.steelDark);
+
+  const W = 2.4;  // interior width (x)
+  const D = 1.8;  // interior depth (z)
+  const H = 2.2;  // wall height
+  const hw = W / 2;
+  const hd = D / 2;
+
+  // Interior floor (top at y=0)
+  addBox(g, W, 0.2, D, PALETTE.darkMud, 0, -0.1, 0);
+
+  // Front wall (faces NML) with high firing slit: lower + upper bands
+  addBox(g, W, 1.1, 0.25, PALETTE.steel, 0, 0.55, -hd);
+  addBox(g, W, 0.85, 0.25, PALETTE.steel, 0, 1.9, -hd);
+  // slit side jambs (visual depth)
+  addBox(g, 0.2, 0.45, 0.25, PALETTE.steelDark, -hw / 2 + 0.3, 1.32, -hd + 0.06);
+  addBox(g, 0.2, 0.45, 0.25, PALETTE.steelDark, hw / 2 - 0.3, 1.32, -hd + 0.06);
+
+  // Rear wall (faces trench) with a 1.0m doorway gap
+  const doorW = 1.0;
+  const sideW = (W - doorW) / 2; // 0.7
+  addBox(g, sideW, H, 0.25, PALETTE.steel, -(doorW / 2 + sideW / 2), H / 2, hd);
+  addBox(g, sideW, H, 0.25, PALETTE.steel, doorW / 2 + sideW / 2, H / 2, hd);
+  // Lintel above the door
+  addBox(g, doorW, 0.5, 0.3, PALETTE.steelDark, 0, H - 0.25, hd);
+
+  // Side walls
+  addBox(g, 0.25, H, D, PALETTE.steel, -hw, H / 2, 0);
+  addBox(g, 0.25, H, D, PALETTE.steel, hw, H / 2, 0);
+
+  // Roof
+  addBox(g, W + 0.5, 0.2, D + 0.5, PALETTE.steelDark, 0, H + 0.1, 0);
+
+  // Corrugation bands on the exterior front
+  for (let i = 0; i < 3; i++) {
+    addBox(g, W, 0.06, 0.26, PALETTE.steelDark, 0, 0.5 + i * 0.5, -hd - 0.04);
   }
-  // Entrance (faces trench, i.e. opposite of facing)
-  addBox(g, 1.3, 2.0, 0.2, PALETTE.mudDark, 0, -0.25, -facing * 1.75);
-  // Firing slit (faces NML)
-  addBox(g, 1.8, 0.22, 0.15, PALETTE.mudDark, 0, 0.15, facing * 1.72);
+
+  // Interior props: bench + ammo crate in the corner
+  const bench = new THREE.Mesh(chamferBox(0.8, 0.5, 0.4, 0.02), mat(PALETTE.woodDark));
+  bench.position.set(hw - 0.55, 0.25, -hd + 0.35);
+  g.add(bench);
+  const crate = buildAmmoCrate(9);
+  crate.position.set(-hw + 0.5, 0.25, -hd + 0.45);
+  crate.rotation.y = -0.5;
+  g.add(crate);
+
   // Dirt mound on top (half-buried look)
   const dirt = new THREE.Mesh(new THREE.BoxGeometry(3.4, 0.5, 2.4), mat(jittered(PALETTE.darkMud, 30)));
-  dirt.position.set(0.3, 1.25, -facing * 0.5);
+  dirt.position.set(0.3, H + 0.32, 0);
   dirt.rotation.z = 0.08;
   g.add(dirt);
+
   return g;
 }
 

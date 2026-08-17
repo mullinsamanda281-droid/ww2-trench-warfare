@@ -72,7 +72,11 @@ for (const [side, name] of [[map.spawnPoints.allied, 'allied'], [map.spawnPoints
 
 // --- 8. Structure blockers ---
 const { bunker, concrete, mortar } = layout;
-assert(c.terrainHeight(bunker.x, bunker.z) === 1.6, 'steel bunker blocks', `got ${c.terrainHeight(bunker.x, bunker.z)}`);
+// Enterable bunker: interior is walkable at ground level, walls block
+assert(c.terrainHeight(bunker.x, bunker.z) === 0, 'steel bunker interior walkable', `got ${c.terrainHeight(bunker.x, bunker.z)}`);
+assert(c.terrainHeight(bunker.x, bunker.z - 0.9) === 2.4, 'bunker front wall blocks', `got ${c.terrainHeight(bunker.x, bunker.z - 0.9)}`);
+assert(c.terrainHeight(bunker.x - 1.15, bunker.z) === 2.4, 'bunker side wall blocks', `got ${c.terrainHeight(bunker.x - 1.15, bunker.z)}`);
+assert(c.terrainHeight(bunker.x, bunker.z + 1.4) === 0, 'bunker rear doorway open to ground', `got ${c.terrainHeight(bunker.x, bunker.z + 1.4)}`);
 const mortarBand = c.terrainHeight(mortar.x, mortar.z - 1.3);
 assert(mortarBand === 1.0, 'mortar ring blocks', `got ${mortarBand}`);
 assert(c.terrainHeight(concrete.x + 1.15, concrete.z) === 2.0, 'concrete pillar blocks');

@@ -10,6 +10,15 @@ import {
   buildMortarPit, buildAmmoCrate, buildLantern,
 } from './structures.js';
 import { createCollision } from './collision.js';
+import { PALETTE } from '../palette.js';
+import { jittered, mat } from '../geometry.js';
+
+const addBox = (g, w, h, d, color, x, y, z) => {
+  const mesh = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat(color));
+  mesh.position.set(x, y, z);
+  g.add(mesh);
+  return mesh;
+};
 
 // Layout constants
 export const ALLIED_Z = 22.5;   // allied trench centerline (south side, +Z)
@@ -41,7 +50,10 @@ export function buildMap() {
   const alliedPoints = makeZigZag(-57, 57, ALLIED_Z, 3, 14);
   // Exits placed well inside segments (lx < halfL+1) so wall gaps get cut
   const alliedExits = [[-50, pathZ(alliedPoints, -50)], [20, pathZ(alliedPoints, 20)]];
-  const alliedRearGaps = [[-18, pathZ(alliedPoints, -18) + 1.2]]; // bunker: solid floor gap
+  // Bunker rear gap: groundLevel staircase so the player can climb out to the
+  // bunker. Placed at a segment-center x (lx < halfL+1) so the wall gets cut.
+  const bunkerX = -36;
+  const alliedRearGaps = [[bunkerX, pathZ(alliedPoints, bunkerX) + 1.2, true]];
   buildTrenchLine({
     points: alliedPoints, facing: -1, group: root,
     exits: alliedExits, rearGaps: alliedRearGaps,
@@ -80,12 +92,21 @@ export function buildMap() {
     strongpoints.add(mg);
   }
 
-  // Allied corrugated steel bunker (half-sunk, straddling the rear wall)
-  const bunkerX = -18;
-  const bunkerZ = pathZ(alliedPoints, bunkerX) + 1.2 + 1.7;
+  // Allied corrugated steel bunker - enterable, straddling the rear wall gap.
+  // Front wall sits just past the trench rear wall; doorway faces the trench.
+  const bunkerZ = pathZ(alliedPoints, bunkerX) + 2.7;
   const steel = buildSteelBunker(-1);
   steel.position.set(bunkerX, 0, bunkerZ);
   strongpoints.add(steel);
+
+  // Sandbag steps ascending from the trench floor to the bunker doorway
+  // (mirror the collision staircase bands: tops -1.9, -1.3, -0.7, -0.1)
+  const stepZ0 = pathZ(alliedPoints, bunkerX) + 1.2; // rear gap center
+  for (let i = 0; i < 4; i++) {
+    const d = [0.1, 0.4, 0.7, 1.0][i];
+    const top = [-1.9, -1.3, -0.7, -0.1][i];
+    addBox(strongpoints, 1.5, 0.35, 0.5, jittered(PALETTE.sandbagDark, 60 + i), bunkerX, top - 0.175, stepZ0 + d - 1.2 + 0.1);
+  }
 
   // Axis concrete bunker entrance (behind the axis rear wall, doorway faces the trench)
   const concX = 18;
@@ -107,7 +128,7 @@ export function buildMap() {
   const crateSpots = [
     [alliedMg[0][0] + 0.9, alliedMg[0][1] + 0.8, 0.5],
     [alliedMg[1][0] - 0.9, alliedMg[1][1] + 0.9, 1.2],
-    [bunkerX - 0.8, bunkerZ - 1.5, -0.4],
+    [bunkerX + 2.2, bunkerZ - 0.6, -0.4], // beside the bunker entrance
     [axisMg[0][0] + 0.9, axisMg[0][1] - 0.8, 0.8],
     [axisMg[1][0] - 0.9, axisMg[1][1] - 0.9, -0.6],
     [mortarX + 0.8, mortarZ + 1.8, 0.3],
@@ -134,6 +155,8 @@ export function buildMap() {
     platforms: [
       ...alliedMg.map(([x, z]) => ({ x, z, r: 1.2, top: 0.35 })),
       ...axisMg.map(([x, z]) => ({ x, z, r: 1.2, top: 0.35 })),
+      // Bunker interior floor (walkable, doorway on the rear wall)
+      { x: bunkerX, z: bunkerZ, r: 1.05, top: 0 },
     ],
     rings: [
       { x: mortarX, z: mortarZ, r: 1.05, top: 1.0 },
@@ -143,7 +166,12 @@ export function buildMap() {
       ...axisPoints.map(([px, pz]) => ({ x: px, z: pz - 0.35 })),
     ],
     blockers: [
-      { x: bunkerX, z: bunkerZ - 0.15, w: 4.4, d: 3.6, top: 1.6 },
+      // Steel bunker hollow shell: front wall, rear wall flanking the doorway, side walls
+      { x: bunkerX, z: bunkerZ - 0.9, w: 2.2, d: 0.3, top: 2.4 },
+      { x: bunkerX - 0.75, z: bunkerZ + 0.9, w: 1.0, d: 0.3, top: 2.4 },
+      { x: bunkerX + 0.75, z: bunkerZ + 0.9, w: 1.0, d: 0.3, top: 2.4 },
+      { x: bunkerX - 1.15, z: bunkerZ, w: 0.3, d: 2.0, top: 2.4 },
+      { x: bunkerX + 1.15, z: bunkerZ, w: 0.3, d: 2.0, top: 2.4 },
       { x: concX + 1.15, z: concZ, w: 0.7, d: 1.6, top: 2.0 },
       { x: concX - 1.15, z: concZ, w: 0.7, d: 1.6, top: 2.0 },
     ],

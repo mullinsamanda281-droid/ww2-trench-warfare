@@ -67,13 +67,27 @@ assert(Number.isFinite(controller.pos.y), 'no NaN after exit climb');
 
 // 6. Jump works on ground
 controller.respawn({ x: 0, z: 0 }, 'allied');
-controller.yaw = 0;
+controller.yaw = Math.PI;
 controller.jumpHeld = true;
 for (let i = 0; i < 20; i++) controller.update(1 / 60);
 assert(controller.pos.y > 0.2, 'jump lifts off ground', `y=${controller.pos.y}`);
 controller.jumpHeld = false;
 for (let i = 0; i < 90; i++) controller.update(1 / 60);
 assert(controller.pos.y <= 0.01, 'lands back on ground', `y=${controller.pos.y}`);
+
+// 7. Climb the bunker steps and enter the steel bunker
+const { bunker } = map.layout;
+controller.respawn({ x: bunker.x, z: pathZ(map.layout.alliedPoints, bunker.x) }, 'allied'); // trench corridor at bunker
+controller.yaw = Math.PI; // face rear (toward bunker)
+controller.snapToGround();
+sim(600, 'KeyW'); // walk up the rear staircase
+assert(controller.pos.y > -0.4, 'climbed bunker steps to ground level', `y=${controller.pos.y}`);
+sim(240, 'KeyW'); // walk into the doorway
+assert(controller.pos.y > -0.05, 'entered bunker interior (floor at 0)', `y=${controller.pos.y}`);
+assert(Math.hypot(controller.pos.x - bunker.x, controller.pos.z - bunker.z) < 1.5, 'reached bunker interior center', `d=${Math.hypot(controller.pos.x - bunker.x, controller.pos.z - bunker.z).toFixed(2)}`);
+// Bunker walls stop forward movement
+sim(240, 'KeyW');
+assert(controller.pos.y > -0.5, 'bunker walls keep player inside', `y=${controller.pos.y}`);
 
 console.log(`\n=== RESULT: ${passed} passed, ${failed} failed ===`);
 process.exit(failed > 0 ? 1 : 0);
