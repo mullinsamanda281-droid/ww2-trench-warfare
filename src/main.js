@@ -128,6 +128,109 @@ window.addEventListener('resize', () => {
   renderer.setSize(window.innerWidth, window.innerHeight);
 });
 
+// --- Touch controls (virtual joystick + look drag + buttons) ---
+const isTouch = ('ontouchstart' in window) || navigator.maxTouchPoints > 0;
+if (isTouch) setupTouchControls();
+
+function setupTouchControls() {
+  const pad = document.getElementById('touch-pad');
+  const btnFire = document.getElementById('btn-fire');
+  const btnJump = document.getElementById('btn-jump');
+  pad.classList.remove('hidden');
+  btnFire.classList.remove('hidden');
+  btnJump.classList.remove('hidden');
+
+  const stick = { active: false, id: null, cx: 0, cy: 0, x: 0, y: 0 };
+  const knob = document.getElementById('stick-knob');
+
+  pad.addEventListener('touchstart', (e) => {
+    const t = e.changedTouches[0];
+    const rect = pad.getBoundingClientRect();
+    stick.active = true;
+    stick.id = t.identifier;
+    stick.cx = t.clientX - rect.left;
+    stick.cy = t.clientY - rect.top;
+    stick.x = 0; stick.y = 0;
+    e.preventDefault();
+  }, { passive: false });
+  pad.addEventListener('touchmove', (e) => {
+    if (!stick.active) return;
+    const rect = pad.getBoundingClientRect();
+    for (const t of e.changedTouches) {
+      if (t.identifier !== stick.id) continue;
+      let dx = (t.clientX - rect.left) - stick.cx;
+      let dy = (t.clientY - rect.top) - stick.cy;
+      const len = Math.hypot(dx, dy);
+      const max = 42;
+      if (len > max) { dx = dx / len * max; dy = dy / len * max; }
+      stick.x = dx / max;
+      stick.y = dy / max;
+      knob.style.transform = `translate(${dx}px, ${dy}px)`;
+      applyStick(stick.x, stick.y);
+      e.preventDefault();
+    }
+  }, { passive: false });
+  const endStick = (e) => {
+    if (!stick.active) return;
+    for (const t of e.changedTouches) {
+      if (t.identifier === stick.id) {
+        stick.active = false;
+        stick.id = null;
+        stick.x = 0; stick.y = 0;
+        knob.style.transform = 'translate(0,0)';
+        applyStick(0, 0);
+      }
+    }
+  };
+  pad.addEventListener('touchend', endStick);
+  pad.addEventListener('touchcancel', endStick);
+
+  function applyStick(x, y) {
+    const keys = player.keys;
+    keys.delete('KeyW'); keys.delete('KeyS'); keys.delete('KeyA'); keys.delete('KeyD');
+    if (y < -0.25) keys.add('KeyW');
+    if (y > 0.25) keys.add('KeyS');
+    if (x < -0.25) keys.add('KeyA');
+    if (x > 0.25) keys.add('KeyD');
+  }
+
+  btnFire.addEventListener('touchstart', (e) => { tryFire(); e.preventDefault(); }, { passive: false });
+  btnJump.addEventListener('touchstart', (e) => { player.jumpHeld = true; e.preventDefault(); }, { passive: false });
+  btnJump.addEventListener('touchend', () => { player.jumpHeld = false; });
+  btnJump.addEventListener('touchcancel', () => { player.jumpHeld = false; });
+
+  // Look drag on the right side of the screen
+  const look = { active: false, id: null, lastX: 0, lastY: 0 };
+  document.addEventListener('touchstart', (e) => {
+    for (const t of e.changedTouches) {
+      if (t.clientX > window.innerWidth * 0.5) {
+        look.active = true;
+        look.id = t.identifier;
+        look.lastX = t.clientX;
+        look.lastY = t.clientY;
+      }
+    }
+  }, { passive: true });
+  document.addEventListener('touchmove', (e) => {
+    if (!look.active) return;
+    for (const t of e.changedTouches) {
+      if (t.identifier !== look.id) continue;
+      const dx = t.clientX - look.lastX;
+      const dy = t.clientY - look.lastY;
+      look.lastX = t.clientX;
+      look.lastY = t.clientY;
+      player.applyLook(dx, dy);
+    }
+  }, { passive: true });
+  const endLook = (e) => {
+    for (const t of e.changedTouches) {
+      if (t.identifier === look.id) { look.active = false; look.id = null; }
+    }
+  };
+  document.addEventListener('touchend', endLook);
+  document.addEventListener('touchcancel', endLook);
+}
+
 // --- Combat ---
 const weaponState = { ammo: [5, 8], reloading: [false, false] };
 let reloadTimer = 0;
