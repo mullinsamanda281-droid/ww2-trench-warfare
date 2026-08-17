@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WW2 Trench Warfare - Low Poly Multiplayer Map</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: #2E2620; overflow: hidden; font-family: 'Courier New', monospace; }
+    canvas { display: block; }
+    #hud {
+      position: fixed; left: 16px; bottom: 16px; color: #C8C2B8; font-size: 13px;
+      background: rgba(0,0,0,0.35); padding: 8px 12px; border-left: 3px solid #8A8A8A;
+      pointer-events: none; user-select: none; letter-spacing: 0.5px; line-height: 1.5;
+    }
+    #crosshair {
+      position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%);
+      width: 6px; height: 6px; border: 1px solid rgba(255,255,255,0.6); pointer-events: none;
+    }
+    #overlay {
+      position: fixed; inset: 0; background: rgba(20,18,14,0.85); color: #D8D2C8;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      font-family: 'Courier New', monospace; z-index: 10; text-align: center;
+    }
+    #overlay h1 { font-size: 26px; letter-spacing: 4px; margin-bottom: 8px; color: #E8E2D8; }
+    #overlay .sub { color: #8A8A8A; font-size: 12px; letter-spacing: 2px; margin-bottom: 24px; }
+    #overlay .keys { font-size: 13px; line-height: 2; color: #B8B2A8; }
+    #overlay .keys b { color: #E8E2D8; }
+    #overlay button {
+      margin-top: 24px; background: #4B5320; color: #E8E2D8; border: none; padding: 12px 36px;
+      font-family: 'Courier New', monospace; font-size: 15px; letter-spacing: 3px; cursor: pointer;
+    }
+    #overlay button:hover { background: #5C6A28; }
+    #overlay.hidden { display: none; }
+    #team-banner {
+      position: fixed; top: 16px; left: 50%; transform: translateX(-50%);
+      color: #E8E2D8; font-size: 12px; letter-spacing: 4px; background: rgba(0,0,0,0.35);
+      padding: 6px 18px; pointer-events: none; user-select: none;
+    }
+  </style>
+</head>
+<body>
+  <div id="overlay">
+    <h1>WW2 TRENCH WARFARE</h1>
+    <div class="sub">LOW-POLY COMPETITIVE MAP · 150M ARENA · ALLIES VS AXIS</div>
+    <div class="keys">
+      <b>W A S D</b> move &nbsp;&nbsp; <b>MOUSE</b> look &nbsp;&nbsp; <b>SPACE</b> jump<br>
+      <b>CTRL</b> crouch &nbsp;&nbsp; <b>LMB</b> fire &nbsp;&nbsp; <b>R</b> reload<br>
+      <b>1</b> Kar98k &nbsp;&nbsp; <b>2</b> M1 Garand &nbsp;&nbsp; <b>SHIFT</b> sprint<br>
+      <b>F</b> switch team view &nbsp;&nbsp; <b>ESC</b> release mouse
+    </div>
+    <button id="start-btn">ENTER THE TRENCHES</button>
+  </div>
+  <div id="crosshair"></div>
+  <div id="team-banner"></div>
+  <div id="hud"></div>
+
+  <script type="importmap">
+    { "imports": { "three": "./node_modules/three/build/three.module.js" } }
+  </script>
+  <script type="module" src="./src/main.js"></script>
+</body>
+</html>
