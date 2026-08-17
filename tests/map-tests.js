@@ -30,6 +30,9 @@ console.log(`\n[1] Tri budget: ${tris.toLocaleString()} tris, ${countMeshes(map.
 assert(tris < 50000, 'map under 50k tris', `actual ${tris}`);
 assert(tris > 1000, 'map has real geometry', `actual ${tris}`);
 
+// --- 1b. Draw call budget (static geometry merged by material) ---
+assert(map.root.userData.drawCalls <= 120, 'draw calls <= 120 (merged)', `actual ${map.root.userData.drawCalls}`);
+
 // --- 2. Map bounds ---
 assert(ALLIED_Z - AXIS_Z === 45, 'trench lines 45m apart');
 assert(Math.abs(NML_MAX - NML_MIN) === 40, 'No Man\'s Land is 40m wide');

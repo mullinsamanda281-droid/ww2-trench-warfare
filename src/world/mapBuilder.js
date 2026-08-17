@@ -10,6 +10,7 @@ import {
   buildMortarPit, buildAmmoCrate, buildLantern,
 } from './structures.js';
 import { createCollision } from './collision.js';
+import { mergeStaticGroups } from './merge.js';
 import { PALETTE } from '../palette.js';
 import { jittered, mat } from '../geometry.js';
 
@@ -185,8 +186,12 @@ export function buildMap() {
     axis: axisSpawnXs.map((x) => ({ x, z: pathZ(axisPoints, x) })),
   };
 
+  // Merge static geometry by material (collapses draw calls). Collision and
+  // layout data are computed above and remain valid (world coords unchanged).
+  const mergedRoot = mergeStaticGroups(root);
+
   return {
-    root,
+    root: mergedRoot,
     terrain,
     collision,
     stats: { terrain: 'see tests' },
