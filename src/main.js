@@ -51,26 +51,28 @@ const bots = [];
 const alliedHome = map.spawnPoints.allied;
 const axisHome = map.spawnPoints.axis;
 const botRoles = ['rifle', 'rifle', 'mg', 'patrol', 'rifle', 'mg'];
-// Bots stand on the fire step (front side of the trench) so they peek over the parapet
+// MG-role bots man the sandbag MG platforms out front; the rest peek from the fire step
+const alliedMgHome = map.layout.alliedMg.map(([x, z]) => ({ x, z }));
+const axisMgHome = map.layout.axisMg.map(([x, z]) => ({ x, z }));
+let alliedMgIdx = 0;
+let axisMgIdx = 0;
+const botOpts = (team, i) => {
+  if (botRoles[i] === 'mg') {
+    const home = team === TEAM.ALLIED ? alliedMgHome[alliedMgIdx++] : axisMgHome[axisMgIdx++];
+    return { home, role: 'mg', yaw: team === TEAM.ALLIED ? 0 : Math.PI };
+  }
+  const home = (team === TEAM.ALLIED ? alliedHome : axisHome)[i];
+  return {
+    home: { x: home.x, z: home.z + (team === TEAM.ALLIED ? -0.68 : 0.68) },
+    role: botRoles[i],
+    yaw: team === TEAM.ALLIED ? 0 : Math.PI,
+  };
+};
 for (let i = 0; i < 6; i++) {
-  const home = alliedHome[i];
-  const isMg = botRoles[i] === 'mg';
-  bots.push(new Soldier(scene, map.collision, {
-    team: TEAM.ALLIED,
-    home: { x: home.x, z: home.z - 0.68 },
-    role: isMg ? 'mg' : 'rifle',
-    yaw: 0, // face -Z toward NML
-  }));
+  bots.push(new Soldier(scene, map.collision, { team: TEAM.ALLIED, ...botOpts(TEAM.ALLIED, i) }));
 }
 for (let i = 0; i < 6; i++) {
-  const home = axisHome[i];
-  const isMg = botRoles[i] === 'mg';
-  bots.push(new Soldier(scene, map.collision, {
-    team: TEAM.AXIS,
-    home: { x: home.x, z: home.z + 0.68 },
-    role: isMg ? 'mg' : 'rifle',
-    yaw: Math.PI, // face +Z toward NML
-  }));
+  bots.push(new Soldier(scene, map.collision, { team: TEAM.AXIS, ...botOpts(TEAM.AXIS, i) }));
 }
 
 // --- Rain ---

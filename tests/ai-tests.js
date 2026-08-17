@@ -75,5 +75,21 @@ const deadWorld = { ...world, player: { ...player, alive: false } };
 bot.fireShot(deadWorld);
 assert(damaged === d0, 'dead player not targeted');
 
+// 6. MG bot snaps onto its sandbag platform (top 0.35) and faces NML
+const [mgX, mgZ] = map.layout.alliedMg[0];
+const mgBot = new Soldier(scene, collision, {
+  team: 'allied',
+  home: { x: mgX, z: mgZ },
+  role: 'mg',
+  yaw: 0,
+});
+assert(Math.abs(mgBot.pos.y - 0.35) < 0.01, 'MG bot stands on platform', `y=${mgBot.pos.y}`);
+assert(Math.abs(mgBot.pos.x - mgX) < 0.01 && Math.abs(mgBot.pos.z - mgZ) < 0.01, 'MG bot centered on platform');
+
+// MG gunner on the platform can see (and be seen by) the enemy line
+const axisPt = { x: mgX, z: pathZ(map.layout.axisPoints, mgX) + 0.68 };
+player.pos.set(axisPt.x, -1.05, axisPt.z);
+assert(mgBot.hasLineOfSight(collision, mgBot.getEye(), new THREE.Vector3(player.pos.x, player.pos.y + 1.55, player.pos.z)), 'MG gunner has sight lines over NML');
+
 console.log(`\n=== RESULT: ${passed} passed, ${failed} failed ===`);
 process.exit(failed > 0 ? 1 : 0);
