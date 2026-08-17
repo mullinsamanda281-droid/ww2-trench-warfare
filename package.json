@@ -4,12 +4,14 @@
   "description": "Small-scale low-poly WW2 trench warfare multiplayer map - blocky BattleBit-inspired, voxel-like environment, 150m competitive arena for 8-12 players",
   "type": "module",
   "main": "src/main.js",
-  "scripts": {
+"scripts": {
     "start": "node scripts/serve.js",
-    "test": "node tests/map-tests.js && node tests/player-tests.js && node tests/ai-tests.js && node tests/mortar-tests.js",
+    "relay": "node server/index.js",
+    "test": "node tests/map-tests.js && node tests/player-tests.js && node tests/ai-tests.js && node tests/mortar-tests.js && node tests/net-tests.js",
     "serve": "node scripts/serve.js"
   },
   "dependencies": {
-    "three": "^0.165.0"
+    "three": "^0.165.0",
+    "ws": "^8.18.0"
   }
 }
