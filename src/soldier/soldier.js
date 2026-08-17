@@ -25,6 +25,9 @@ export class Soldier {
     this.burstLeft = 0;
     this.speed = 2.2;
     this.walkTarget = null;
+    this.suppressed = false;
+    this.suppressUntil = 0;
+    this.duckAmount = 0;
 
     this.group = this.buildMesh();
     this.pos = new THREE.Vector3(this.home.x, 0, this.home.z);
@@ -120,7 +123,13 @@ export class Soldier {
     this.health -= damage;
     if (this.health <= 0) {
       this.die(dir);
+      return;
     }
+    // Take cover: duck below the parapet, re-peek later at a shifted spot
+    this.suppressed = true;
+    this.suppressUntil = performance.now() + 1400 + Math.random() * 900;
+    this.state = 'hold';
+    this.burstLeft = 0;
   }
 
   die(dir) {
@@ -183,6 +192,20 @@ export class Soldier {
 
     // Simple peek-shoot behavior from firing positions
     this.shootTimer -= dt;
+    const now = performance.now();
+    if (this.suppressed && now >= this.suppressUntil) {
+      // Re-peek at a slightly shifted firing spot
+      this.suppressed = false;
+      const shift = (Math.random() - 0.5) * 4;
+      this.home.x = Math.max(-45, Math.min(45, this.home.x + shift));
+      this.pos.x = this.home.x;
+      this.snapToGround();
+    }
+    // While suppressed, stay below the parapet
+    this.duckAmount += ((this.suppressed ? 1 : 0) - this.duckAmount) * Math.min(1, dt * 10);
+    const duck = this.duckAmount * 0.55;
+
+    if (!this.suppressed) {
     switch (this.state) {
       case 'hold':
         if (this.shootTimer <= 0) {
@@ -207,6 +230,7 @@ export class Soldier {
         }
         break;
     }
+    }
 
     // Occasional reposition along the trench (patrol role)
     if (this.role === 'patrol' && Math.random() < dt * 0.1) {
@@ -224,9 +248,9 @@ export class Soldier {
     }
 
     this.group.position.set(this.pos.x, this.pos.y, this.pos.z);
-    // Walk bob
+    // Walk bob + suppression duck (drops below the parapet when under fire)
     const bob = this.walkTarget !== null ? Math.abs(Math.sin(time * 8)) * 0.05 : Math.sin(time * 2 + this.home.x) * 0.01;
-    this.group.position.y += bob;
+    this.group.position.y += bob - duck;
   }
 
   recoilPunch() {

@@ -91,5 +91,18 @@ const axisPt = { x: mgX, z: pathZ(map.layout.axisPoints, mgX) + 0.68 };
 player.pos.set(axisPt.x, -1.05, axisPt.z);
 assert(mgBot.hasLineOfSight(collision, mgBot.getEye(), new THREE.Vector3(player.pos.x, player.pos.y + 1.55, player.pos.z)), 'MG gunner has sight lines over NML');
 
+// 7. Suppression: a bot hit by the player ducks below the parapet and stops firing
+bot.suppressed = true;
+bot.suppressUntil = performance.now() + 2000;
+bot.state = 'shoot';
+bot.burstLeft = 3;
+bot.update(1 / 30, 1, { sound: null, player, collision });
+assert(bot.burstLeft === 3, 'suppressed bot does not fire');
+assert(bot.suppressed === true, 'bot stays suppressed during window');
+// after the window expires it re-peeks and clears suppression
+bot.suppressUntil = performance.now() - 1;
+bot.update(1 / 30, 1, { sound: null, player, collision });
+assert(bot.suppressed === false, 'bot re-peeks after suppression window');
+
 console.log(`\n=== RESULT: ${passed} passed, ${failed} failed ===`);
 process.exit(failed > 0 ? 1 : 0);
