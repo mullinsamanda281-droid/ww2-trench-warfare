@@ -22,11 +22,12 @@ const addBox = (group, w, h, d, color, x, y, z, opts = {}) => {
 };
 
 // Build a wall piece along local X from startX to endX (world-frame gap positions are
-// converted by the caller into local coordinates before calling).
-const addWallPiece = (group, h, startX, endX, zPos, thickness, color) => {
+// converted by the caller into local coordinates before calling). baseY is the height
+// of the box's bottom edge (default: trench floor, so walls rise to ground level).
+const addWallPiece = (group, h, startX, endX, zPos, thickness, color, baseY = -TRENCH_DEPTH) => {
   if (endX - startX < 0.4) return;
   const len = endX - startX;
-  addBox(group, len + thickness, h, thickness, color, (startX + endX) / 2, -TRENCH_DEPTH + h / 2, zPos);
+  addBox(group, len + thickness, h, thickness, color, (startX + endX) / 2, baseY + h / 2, zPos);
 };
 
 export function buildTrenchLine(opts) {
@@ -109,8 +110,10 @@ export function buildTrenchLine(opts) {
       parapetPieces = next;
     }
     for (const [s, e] of parapetPieces) {
-      addWallPiece(seg, PARAPET_HEIGHT, s, e, TRENCH_WIDTH / 2 + 0.28, 0.75, jittered(PALETTE.sandbagDark, i * 13 + 5));
-      addWallPiece(seg, PARAPET_HEIGHT - 0.18, s, e, TRENCH_WIDTH / 2 + 0.33, 0.75, jittered(PALETTE.sandbagTan, i * 13 + 6));
+      // Parapet berm sits on top of the front wall (base at ground level 0),
+      // so its top (0.45) hides a crouching soldier on the firing step below.
+      addWallPiece(seg, PARAPET_HEIGHT, s, e, TRENCH_WIDTH / 2 + 0.28, 0.75, jittered(PALETTE.sandbagDark, i * 13 + 5), 0);
+      addWallPiece(seg, PARAPET_HEIGHT - 0.18, s, e, TRENCH_WIDTH / 2 + 0.33, 0.75, jittered(PALETTE.sandbagTan, i * 13 + 6), 0);
     }
 
     // Firing step (front side, 1.45m above floor -> eye-level just clears parapet)

@@ -159,5 +159,34 @@ const walk = (pts) => {
 assert(walk(allied), 'allied corridor continuous along path');
 assert(walk(axis), 'axis corridor continuous along path');
 
+// --- 14. Bullet ray tracing: parapet blocks low shots, allows over-the-top fire ---
+// Allied trench at z=22.5 faces -Z (toward NML). Fire step at z=21.82 (step top -1.05).
+// A soldier's eye on the step sits at ~0.5, which must clear the parapet berm top (0.45).
+const stepPt = { x: 0, z: pz(allied, 0) - 0.68 };
+const eyeOnStep = 0.5;
+assert(c.rayHeight(stepPt.x, stepPt.z) === -1.05, 'fire step surface is -1.05', `got ${c.rayHeight(stepPt.x, stepPt.z)}`);
+// Aim just above the parapet from the fire step toward the enemy line
+const aimY = eyeOnStep + 0.02;
+let clear = true;
+for (let z = stepPt.z; z > -23; z -= 0.5) {
+  if (c.rayHeight(stepPt.x, z) > aimY) { clear = false; break; }
+}
+assert(clear, 'fire-step eye line clears parapet across NML');
+
+// A low shot (along the trench floor line, y=-1.0) must be stopped by the parapet
+let blocked = false;
+for (let z = stepPt.z; z > -23; z -= 0.5) {
+  const h = c.rayHeight(stepPt.x, z);
+  if (-1.0 < h) { blocked = true; break; }
+}
+assert(blocked, 'low shot is blocked by parapet');
+
+// Soldier on the trench floor (eye -0.95) is hidden behind the parapet/wall
+let visible = true;
+for (let z = pz(allied, 0) - 0.3; z > -23; z -= 0.5) {
+  if (c.rayHeight(stepPt.x, z) > -0.95) { visible = false; break; }
+}
+assert(!visible, 'floor-level eye line is hidden behind the parapet');
+
 console.log(`\n=== RESULT: ${passed} passed, ${failed} failed ===`);
 process.exit(failed > 0 ? 1 : 0);

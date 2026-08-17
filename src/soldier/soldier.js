@@ -174,6 +174,7 @@ export class Soldier {
           this.burstLeft--;
           this.muzzleFlash(time);
           if (world && world.sound) world.sound.gunshot();
+          this.fireShot(world);
           this.shootTimer = this.role === 'mg' ? 0.12 : 0.7;
           this.recoilPunch();
         }
@@ -227,11 +228,44 @@ export class Soldier {
   }
 
   getMuzzle() {
+    this.group.updateMatrixWorld(true);
     return new THREE.Vector3(0, 1.02, -0.72).applyMatrix4(this.group.matrixWorld);
   }
 
   getEye() {
     return new THREE.Vector3(0, EYE, 0).applyMatrix4(this.group.matrixWorld);
+  }
+
+  // Bot fire vs the local player: only hits when the target is exposed above
+  // the parapet (or out in No Man's Land) and the bullet line is clear.
+  fireShot(world) {
+    if (!world || !world.player) return;
+    const p = world.player;
+    if (!p.alive || p.team === this.team) return;
+
+    const eye = this.getEye();
+    const target = new THREE.Vector3(p.pos.x, p.pos.y + p.eyeHeight, p.pos.z);
+    if (!this.hasLineOfSight(world.collision, eye, target)) return;
+
+    const dist = eye.distanceTo(target);
+    const hitChance = Math.max(0.1, 0.6 - dist * 0.005);
+    if (Math.random() < hitChance) {
+      world.damagePlayer(this.role === 'mg' ? 9 : 32, this);
+    }
+  }
+
+  hasLineOfSight(collision, from, to) {
+    const dir = to.clone().sub(from);
+    const dist = dir.length();
+    dir.normalize();
+    const step = 0.7;
+    for (let d = step; d < dist; d += step) {
+      const px = from.x + dir.x * d;
+      const py = from.y + dir.y * d;
+      const pz = from.z + dir.z * d;
+      if (py < collision.rayHeight(px, pz)) return false;
+    }
+    return true;
   }
 
   // World-space AABB for hitscan

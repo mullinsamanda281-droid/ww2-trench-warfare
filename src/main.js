@@ -15,6 +15,8 @@ const overlay = document.getElementById('overlay');
 const hud = document.getElementById('hud');
 const banner = document.getElementById('team-banner');
 const crosshair = document.getElementById('crosshair');
+const dmgEl = document.getElementById('dmg');
+const deathEl = document.getElementById('death');
 
 const renderer = new THREE.WebGLRenderer({ antialias: false, powerPreference: 'high-performance' });
 renderer.setSize(window.innerWidth, window.innerHeight);
@@ -158,7 +160,8 @@ function castShot(ray) {
       best = { type: 'soldier', soldier: b, dist: hit.distanceTo(ray.ray.origin) };
     }
   }
-  // March the ray against the terrain heightfield
+  // March the ray against the visible terrain surface (rayHeight lets bullets
+  // clear parapets/walls instead of stopping at the blocked-walk marker)
   const origin = ray.ray.origin;
   const dir = ray.ray.direction;
   let dist = 0;
@@ -169,7 +172,7 @@ function castShot(ray) {
     const px = origin.x + dir.x * dist;
     const py = origin.y + dir.y * dist;
     const pz = origin.z + dir.z * dist;
-    const h = map.collision.terrainHeight(px, pz);
+    const h = map.collision.rayHeight(px, pz);
     if (py < h) { terrainDist = dist; break; }
   }
   if (terrainDist !== null && (!best || terrainDist < best.dist)) {
@@ -210,6 +213,40 @@ function killSelf() {
   setTimeout(() => player.respawn(player.team === TEAM.ALLIED ? map.spawnPoints.allied[0] : map.spawnPoints.axis[0], player.team), 800);
 }
 
+// --- Player damage / death / respawn loop ---
+let dmgTimer = null;
+let deathTimer = null;
+
+function teamSpawn() {
+  return team === TEAM.ALLIED ? map.spawnPoints.allied[0] : map.spawnPoints.axis[0];
+}
+
+function damagePlayer(amount) {
+  if (!player.alive) return;
+  player.health -= amount;
+  flashDamage();
+  if (player.health <= 0) {
+    player.health = 0;
+    killPlayer();
+  }
+}
+
+function flashDamage() {
+  dmgEl.classList.add('show');
+  clearTimeout(dmgTimer);
+  dmgTimer = setTimeout(() => dmgEl.classList.remove('show'), 130);
+}
+
+function killPlayer() {
+  player.alive = false;
+  deathEl.classList.remove('hidden');
+  clearTimeout(deathTimer);
+  deathTimer = setTimeout(() => {
+    player.respawn(teamSpawn(), player.team);
+    deathEl.classList.add('hidden');
+  }, 2600);
+}
+
 // --- Net (optional; connect via ?server=ws://host:port) ---
 const netUrl = new URLSearchParams(location.search).get('server');
 let net = null;
@@ -234,7 +271,7 @@ function animate() {
   artillery.update(dt, t);
   rain.update(dt, player.pos);
 
-  for (const b of bots) b.update(dt, t, { sound });
+  for (const b of bots) b.update(dt, t, { sound, player, collision: map.collision });
 
   if (net) {
     net.updateState(makeSnapshot(player));
