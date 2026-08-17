@@ -6,6 +6,7 @@ import { PlayerController } from './player/playerController.js';
 import { WeaponView } from './player/weaponView.js';
 import { Soldier } from './soldier/soldier.js';
 import { Rain } from './atmosphere/rain.js';
+import { Mortar } from './atmosphere/mortar.js';
 import { setupEnvironment, createArtilleryFlashes } from './atmosphere/environment.js';
 import { SoundSystem } from './atmosphere/sound.js';
 import { NetClient, makeSnapshot, TEAM } from './net/protocol.js';
@@ -77,6 +78,11 @@ for (let i = 0; i < 6; i++) {
 
 // --- Rain ---
 const rain = new Rain(scene);
+
+// --- Axis mortar pit ---
+const mortar = new Mortar(scene, map.collision, map.layout.mortar, sound, {
+  onPlayerHit: (amount) => damagePlayer(amount),
+});
 
 // --- Input ---
 const pointerLocked = { locked: false };
@@ -295,6 +301,7 @@ function animate() {
   env.update(dt, t);
   artillery.update(dt, t);
   rain.update(dt, player.pos);
+  mortar.update(dt, map.layout, player);
   updateFootsteps(dt);
 
   for (const b of bots) b.update(dt, t, { sound, player, collision: map.collision });

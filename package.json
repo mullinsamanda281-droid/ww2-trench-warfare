@@ -6,7 +6,7 @@
   "main": "src/main.js",
   "scripts": {
     "start": "node scripts/serve.js",
-    "test": "node tests/map-tests.js && node tests/player-tests.js && node tests/ai-tests.js",
+    "test": "node tests/map-tests.js && node tests/player-tests.js && node tests/ai-tests.js && node tests/mortar-tests.js",
     "serve": "node scripts/serve.js"
   },
   "dependencies": {

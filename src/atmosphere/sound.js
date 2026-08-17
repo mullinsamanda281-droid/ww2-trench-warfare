@@ -191,6 +191,44 @@ export class SoundSystem {
     noise.connect(lp).connect(this.master);
   }
 
+  // Mortar shell whistle (descending while falling)
+  whistle() {
+    if (!this.ctx || !this.enabled) return;
+    const t = this.ctx.currentTime;
+    const osc = this.ctx.createOscillator();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(1400, t);
+    osc.frequency.exponentialRampToValueAtTime(500, t + 1.9);
+    const g = this.ctx.createGain();
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(0.06, t + 0.3);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 2.0);
+    osc.connect(g).connect(this.master);
+    osc.start(t);
+    osc.stop(t + 2.05);
+  }
+
+  // Close impact explosion
+  explosion() {
+    if (!this.ctx || !this.enabled) return;
+    const t = this.ctx.currentTime;
+    const noise = this.noiseBurst(t, 0.5, 0.9);
+    const lp = this.ctx.createBiquadFilter();
+    lp.type = 'lowpass';
+    lp.frequency.value = 700;
+    noise.connect(lp).connect(this.master);
+    const osc = this.ctx.createOscillator();
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(110, t);
+    osc.frequency.exponentialRampToValueAtTime(35, t + 0.5);
+    const g = this.ctx.createGain();
+    g.gain.setValueAtTime(0.8, t);
+    g.gain.exponentialRampToValueAtTime(0.001, t + 0.6);
+    osc.connect(g).connect(this.master);
+    osc.start(t);
+    osc.stop(t + 0.65);
+  }
+
   noiseBurst(t, dur, vol) {
     const bufferSize = Math.floor(this.ctx.sampleRate * dur);
     const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);

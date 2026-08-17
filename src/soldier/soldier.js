@@ -7,6 +7,7 @@ import { jittered } from '../geometry.js';
 import { mat, chamferBox, lowPolyCylinder } from '../geometry.js';
 
 const EYE = 1.5;
+const raf = typeof requestAnimationFrame !== 'undefined' ? requestAnimationFrame : (fn) => setTimeout(() => fn(), 16);
 
 export class Soldier {
   constructor(scene, collision, opts) {
@@ -148,7 +149,7 @@ export class Soldier {
       const s = 1 + t * 2.2;
       puff.scale.set(s, s * 0.8, s);
       puff.material.opacity = 0.65 * (1 - t);
-      requestAnimationFrame(grow);
+      raf(grow);
     };
     grow();
   }
